@@ -206,6 +206,44 @@ export const addExecutionProof = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const uploadExecutionProof = createServerFn({ method: "POST" })
+  .inputValidator(
+    (d: {
+      id: string;
+      fileName: string;
+      contentType: string;
+      dataBase64: string;
+      description?: string | undefined;
+    }) => d,
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }) => {
+    const { assertAdmin, db } = await import("./admin.server");
+    const admin = await assertAdmin(context.userId);
+
+    const binary = Uint8Array.from(atob(data.dataBase64), (c) => c.charCodeAt(0));
+    if (binary.byteLength > 10 * 1024 * 1024) throw new Error("Fichier trop volumineux (max 10 Mo)");
+
+    const safeName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80);
+    const path = `execution/${data.id}/${Date.now()}-${safeName}`;
+
+    const { error: upErr } = await db.storage
+      .from("transaction-proofs")
+      .upload(path, binary, { contentType: data.contentType || "application/octet-stream", upsert: false });
+    if (upErr) throw new Error(upErr.message);
+
+    const { data: pub } = db.storage.from("transaction-proofs").getPublicUrl(path);
+
+    const { error } = await db.from("transaction_execution_proofs").insert({
+      transaction_id: data.id,
+      file_url: pub.publicUrl,
+      description: data.description ?? null,
+      uploaded_by_admin_id: admin.id,
+    } as never);
+    if (error) throw new Error(error.message);
+    return { ok: true, url: pub.publicUrl };
+  });
+
 export const assignTransaction = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; partnerId: string; responsibility: string }) => d)
   .middleware([requireSupabaseAuth])
