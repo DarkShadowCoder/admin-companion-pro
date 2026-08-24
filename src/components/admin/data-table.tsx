@@ -111,9 +111,9 @@ export function DataTable<T extends { id?: string }>({
   const hasToolbar = searchable || !!filters?.length || !!toolbar;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {hasToolbar && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="surface flex flex-wrap items-center gap-2 rounded-xl p-2.5">
           {searchable && (
             <div className="relative min-w-[200px] flex-1">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -154,37 +154,47 @@ export function DataTable<T extends { id?: string }>({
         </div>
       )}
 
-      <Card className="overflow-hidden p-0">
+      <Card className="surface overflow-hidden rounded-xl p-0 shadow-none">
         {loading ? (
-          <div className="space-y-2 p-4">
+          <div className="divide-y divide-border">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-11" />
+              <div key={i} className="flex items-center gap-4 px-5 py-4">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-4 w-1/6" />
+                <Skeleton className="ml-auto h-4 w-1/5" />
+              </div>
             ))}
           </div>
         ) : visibleRows.length === 0 ? (
           <EmptyState message={total === 0 && allRows.length > 0 ? "Aucun résultat pour ces critères." : empty} />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="max-h-[70vh] overflow-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs tracking-wide text-muted-foreground uppercase">
+              <thead className="sticky top-0 z-10 bg-muted/70 text-left text-[11px] tracking-wider text-muted-foreground uppercase backdrop-blur">
                 <tr>
                   {columns.map((c) => (
                     <th
                       key={c.key}
-                      className={cn("px-4 py-3 font-medium", c.align === "right" && "text-right")}
+                      className={cn(
+                        "border-b border-border px-5 py-3 font-semibold whitespace-nowrap",
+                        c.align === "right" && "text-right",
+                      )}
                     >
                       {c.header}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border/70">
                 {visibleRows.map((row, i) => (
-                  <tr key={(row.id as string) ?? i} className="hover:bg-muted/40">
+                  <tr key={(row.id as string) ?? i} className="transition-colors hover:bg-muted/40">
                     {columns.map((c) => (
                       <td
                         key={c.key}
-                        className={cn("px-4 py-3 align-top", c.align === "right" && "text-right")}
+                        className={cn(
+                          "px-5 py-3.5 align-middle",
+                          c.align === "right" && "num text-right",
+                        )}
                       >
                         {c.render(row)}
                       </td>
@@ -198,7 +208,7 @@ export function DataTable<T extends { id?: string }>({
       </Card>
 
       {paginated && !loading && total > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-1">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>Lignes par page</span>
             <Select
