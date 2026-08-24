@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Check, X, Ban, Paperclip, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, X, Ban, Paperclip, UserPlus, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   getTransaction,
   decideTransaction,
-  addExecutionProof,
+  uploadExecutionProof,
   assignTransaction,
   listPartners,
 } from "@/lib/admin.functions";
@@ -19,6 +19,36 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { money, dateTime, label, TX_TYPE_LABELS } from "@/lib/format";
+
+function isImageUrl(url: string) {
+  return /\.(png|jpe?g|gif|webp|avif|bmp|svg)(\?|#|$)/i.test(url ?? "");
+}
+
+function ProofPreview({ url, caption }: { url: string; caption?: string | null }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="group block overflow-hidden rounded-lg border border-border bg-muted/30 transition hover:border-primary/50"
+    >
+      {isImageUrl(url) ? (
+        <img
+          src={url}
+          alt={caption || "Preuve de transaction"}
+          loading="lazy"
+          className="h-48 w-full bg-background object-contain transition group-hover:scale-[1.01]"
+        />
+      ) : (
+        <div className="flex h-48 items-center justify-center gap-2 text-sm text-muted-foreground">
+          <FileText className="size-5" /> Ouvrir le fichier
+        </div>
+      )}
+      <p className="truncate border-t border-border px-3 py-2 text-xs text-muted-foreground">{caption || url}</p>
+    </a>
+  );
+}
+
 
 export const Route = createFileRoute("/admin/transactions/$id")({
   head: () => ({
