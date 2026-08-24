@@ -81,7 +81,7 @@ function LoginPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex">
+      <div className="brand-gradient relative hidden flex-col justify-between p-12 text-primary-foreground lg:flex">
         <div className="flex items-center gap-2">
           <span className="font-display grid size-10 place-items-center rounded-xl bg-primary-foreground/15 text-xl font-bold">
             Z
@@ -101,7 +101,7 @@ function LoginPage() {
       </div>
 
       <div className="flex items-center justify-center p-6">
-        <Card className="w-full max-w-sm p-7">
+        <Card className="surface elevated w-full max-w-sm rounded-2xl p-8">
           <div className="mb-6 space-y-1.5 text-center">
             <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary">
               <ShieldCheck className="size-5" />
