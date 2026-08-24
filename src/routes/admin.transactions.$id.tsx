@@ -71,14 +71,16 @@ function TransactionDetail() {
   const fetchTx = useServerFn(getTransaction);
   const fetchPartners = useServerFn(listPartners);
   const decide = useServerFn(decideTransaction);
-  const addProof = useServerFn(addExecutionProof);
+  const uploadProof = useServerFn(uploadExecutionProof);
   const assign = useServerFn(assignTransaction);
 
   const [reason, setReason] = useState("");
-  const [proofUrl, setProofUrl] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [proofNote, setProofNote] = useState("");
   const [partnerId, setPartnerId] = useState("");
   const [responsibility, setResponsibility] = useState("execution");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data, isPending } = useQuery({
     queryKey: ["transaction", id],
@@ -98,16 +100,43 @@ function TransactionDetail() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const pickFile = (file: File | null) => {
+    setProofFile(file);
+    setProofPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file && file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
+    });
+  };
+
   const proofMut = useMutation({
-    mutationFn: () => addProof({ data: { id, fileUrl: proofUrl, description: proofNote || undefined } }),
+    mutationFn: async () => {
+      if (!proofFile) throw new Error("Aucun fichier sélectionné");
+      if (proofFile.size > 10 * 1024 * 1024) throw new Error("Fichier trop volumineux (max 10 Mo)");
+      const buf = new Uint8Array(await proofFile.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i += 8192) {
+        bin += String.fromCharCode(...buf.subarray(i, i + 8192));
+      }
+      return uploadProof({
+        data: {
+          id,
+          fileName: proofFile.name,
+          contentType: proofFile.type || "application/octet-stream",
+          dataBase64: btoa(bin),
+          description: proofNote || undefined,
+        },
+      });
+    },
     onSuccess: () => {
       toast.success("Preuve d'exécution ajoutée");
-      setProofUrl("");
+      pickFile(null);
       setProofNote("");
+      if (fileRef.current) fileRef.current.value = "";
       refresh();
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const assignMut = useMutation({
     mutationFn: () => assign({ data: { id, partnerId, responsibility } }),
